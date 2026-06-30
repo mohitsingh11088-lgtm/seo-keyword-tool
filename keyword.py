@@ -1,3 +1,4 @@
+import streamlit as st
 import requests
 
 # -----------------------------
@@ -6,10 +7,8 @@ import requests
 def get_google_suggestions(keyword, country="in"):
     url = f"https://suggestqueries.google.com/complete/search?client=firefox&q={keyword}&gl={country}"
     headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-
     try:
-        return response.json()[1]
+        return requests.get(url, headers=headers, timeout=10).json()[1]
     except:
         return []
 
@@ -20,39 +19,39 @@ def get_google_suggestions(keyword, country="in"):
 def get_youtube_suggestions(keyword, country="in"):
     url = f"https://suggestqueries.google.com/complete/search?client=firefox&ds=yt&q={keyword}&gl={country}"
     headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-
     try:
-        return response.json()[1]
+        return requests.get(url, headers=headers, timeout=10).json()[1]
     except:
         return []
 
 
 # -----------------------------
-# Main Program
+# UI START
 # -----------------------------
-seed = input("Enter seed keyword: ")
-country = input("Enter country code (us/uk/in/ca/au): ").lower()
+st.title("🚀 SEO Keyword Research Tool")
 
-keywords = set()
+seed = st.text_input("Enter seed keyword")
+country = st.selectbox("Select country", ["us", "uk", "in", "ca", "au"])
 
-# Step 1: base suggestions
-base_google = get_google_suggestions(seed, country)
-base_youtube = get_youtube_suggestions(seed, country)
+if seed:
 
-keywords.update(base_google)
-keywords.update(base_youtube)
+    keywords = set()
 
-# Step 2: expand keywords (second level)
-for kw in list(keywords):
-    more_google = get_google_suggestions(kw, country)
-    keywords.update(more_google)
+    # Step 1
+    base_google = get_google_suggestions(seed, country)
+    base_youtube = get_youtube_suggestions(seed, country)
 
-# Step 3: clean & output
-keywords = sorted(list(keywords))
+    keywords.update(base_google)
+    keywords.update(base_youtube)
 
-print(f"\nTotal Keywords Found: {len(keywords)}")
-print(f"Country: {country.upper()}\n")
+    # Step 2 expand
+    for kw in list(keywords)[:10]:
+        more = get_google_suggestions(kw, country)
+        keywords.update(more)
 
-for k in keywords:
-    print("-", k)
+    keywords = sorted(list(keywords))
+
+    st.subheader(f"Total Keywords Found: {len(keywords)}")
+
+    for k in keywords:
+        st.write("🔹", k)
